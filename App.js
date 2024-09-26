@@ -1,3 +1,5 @@
+//root/app.js
+
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -6,11 +8,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { initializeApp, getApps } from 'firebase/app';
 
-import CarList from './screens/OrderList';
-import CarDetails from './screens/OrderDetails';
-import Add_edit_Car from './screens/Add_edit_Order';
-import TruckView from './screens/TruckView'; 
-
+import OrderList from './screens/OrderList';
+import AddOrder from './screens/AddOrder';
+import TruckView from './screens/TruckView';
+import ConstraintsView from './screens/ConstraintsView';
 
 
 //Firebase konfiguration fra .env-filen
@@ -25,9 +26,6 @@ const firebaseConfig = {
 };
 
 
-
-
-
 // Initialiser Firebase, hvis det ikke allerede er gjort
 if (getApps().length < 1) {
   initializeApp(firebaseConfig);
@@ -37,26 +35,30 @@ if (getApps().length < 1) {
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+
 const StackNavigation = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name={'Order List'} component={CarList} options={{ headerShown: null }} />
-      <Stack.Screen name={'Order Details'} component={CarDetails} options={{ headerShown: null }} />
-      <Stack.Screen name={'Edit Order'} component={Add_edit_Car} options={{ headerShown: null }} />
+      <Stack.Screen name={'Order List'} component={OrderList} options={{ headerShown: null }} />
+      <Stack.Screen name={'Add Order'} component={AddOrder} options={{ headerShown: null }} />
       <Stack.Screen name={'Truck View'} component={TruckView} options={{ headerShown: null }} />
+      <Stack.Screen name={'Constraints'} component={ConstraintsView} options={{ headerShown: null }} />
     </Stack.Navigator>
   );
 };
 
-const BottomNavigation = () => { 
+
+const BottomNavigation = () => {
   return (
     <Tab.Navigator>
-      <Tab.Screen name={'Home'} component={StackNavigation} options={{ tabBarIcon: () => ( <Ionicons name="home" size={20} /> )}} />
-      <Tab.Screen name={'Add'} component={Add_edit_Car} options={{ tabBarIcon: () => ( <Ionicons name="add" size={20} /> )}} />
-      <Tab.Screen name={'Truck'} component={TruckView} options={{ tabBarIcon: () => ( <Ionicons name="car" size={20} /> )}} />           
+      <Tab.Screen name={'Home'} component={StackNavigation} options={{ tabBarIcon: () => (<Ionicons name="home" size={20} />) }} />
+      <Tab.Screen name={'Add'} component={AddOrder} options={{ tabBarIcon: () => (<Ionicons name="add" size={20} />) }} />
+      <Tab.Screen name={'Truck'} component={TruckView} options={{ tabBarIcon: () => (<Ionicons name="car" size={20} />) }} />
+      <Tab.Screen name={'Constraints'} component={ConstraintsView} options={{ tabBarIcon: () => (<Ionicons name="settings" size={20} />) }} />
     </Tab.Navigator>
   );
 };
+
 
 export default function App() {
   return (
@@ -75,3 +77,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+
+
+
+
+
+
+
+

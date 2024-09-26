@@ -1,7 +1,5 @@
-// screens/TruckView.js
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Button, Linking } from 'react-native';
 import { getDatabase, ref, onValue } from "firebase/database";
 
 const TruckView = () => {
@@ -12,7 +10,7 @@ const TruckView = () => {
 
     useEffect(() => {
         const db = getDatabase();
-        const ordersRef = ref(db, 'Cars'); // Ændre til den korrekte sti til dine ordrer
+        const ordersRef = ref(db, 'Orders'); // Ændre til den korrekte sti til dine ordrer
 
         const unsubscribe = onValue(ordersRef, (snapshot) => {
             const data = snapshot.val();
@@ -21,7 +19,7 @@ const TruckView = () => {
                 setOrders(orderList);
 
                 // Beregn samlede indtjening og antal ordrer
-                const totalEarnings = orderList.reduce((acc, order) => acc + parseFloat(order.pris || 0), 0);
+                const totalEarnings = orderList.reduce((acc, order) => acc + parseFloat(order.price || 0), 0);
                 const totalOrders = orderList.length;
                 setRouteDetails({ totalEarnings, totalOrders });
             } else {
@@ -46,6 +44,25 @@ const TruckView = () => {
         setIsRouteVisible(!isRouteVisible);
     };
 
+    const openGoogleMaps = () => {
+        if (orders.length === 0) {
+            Alert.alert("Ingen ordrer", "Der er ingen ordrer at rute.");
+            return;
+        }
+
+        // Angiv startpunkt som det første afhentningssted
+        const startPoint = orders[0].pickupAddress;
+
+        // Saml unikke adresser for leveringsstederne
+        const destinationsSet = new Set(orders.map(order => order.deliveryAddress));
+        const destinations = Array.from(destinationsSet).join('|'); // Brug '|' til at separere adresserne
+
+        // Opret URL'en til Google Maps
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint)}&destination=${encodeURIComponent(destinations)}&waypoints=${encodeURIComponent(Array.from(destinationsSet).join('|'))}`;
+
+        Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Ledige ruter</Text>
@@ -61,16 +78,17 @@ const TruckView = () => {
                 <View>
                     {orders.map((item) => (
                         <View key={item.id} style={styles.orderContainer}>
-                            <Text>{`Genstand: ${item.genstand}`}</Text>
-                            <Text>{`Afhentningsadresse: ${item.afhentningsadresse}`}</Text>
-                            <Text>{`Afhentningsdato: ${item.afhentningsdato}`}</Text>
-                            <Text>{`Leveringsdato: ${item.leveringsdato}`}</Text>
-                            <Text>{`Leveringsadresse: ${item.leveringsadresse}`}</Text>
-                            <Text>{`Vægt: ${item.vægt}`}</Text>
-                            <Text>{`Dimensioner: ${item.dimensioner}`}</Text>
-                            <Text>{`Pris: ${item.pris}`}</Text>
+                            <Text>{`Genstand: ${item.item}`}</Text>
+                            <Text>{`Afhentningsadresse: ${item.deliveryAddress}`}</Text>
+                            <Text>{`Afhentningsdato: ${item.pickupDate}`}</Text>
+                            <Text>{`Leveringsdato: ${item.deliveryDate}`}</Text>
+                            <Text>{`Leveringsadresse: ${item.pickupAddress}`}</Text>
+                            <Text>{`Vægt: ${item.weight}`}</Text>
+                            <Text>{`Pris: ${item.price}`}</Text>
                         </View>
                     ))}
+                    {/* Knappen til at åbne Google Maps */}
+                    <Button title="Åben rute i Maps" onPress={openGoogleMaps} />
                 </View>
             )}
         </View>
@@ -106,3 +124,7 @@ const styles = StyleSheet.create({
 });
 
 export default TruckView;
+
+
+
+ 
