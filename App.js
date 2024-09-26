@@ -14,6 +14,7 @@ import TruckView from './screens/TruckView';
 import ConstraintsView from './screens/ConstraintsView';
 
 
+
 //Firebase konfiguration fra .env-filen
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -39,10 +40,10 @@ const Tab = createBottomTabNavigator();
 const StackNavigation = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name={'Order List'} component={OrderList} options={{ headerShown: null }} />
-      <Stack.Screen name={'Add Order'} component={AddOrder} options={{ headerShown: null }} />
-      <Stack.Screen name={'Truck View'} component={TruckView} options={{ headerShown: null }} />
-      <Stack.Screen name={'Constraints'} component={ConstraintsView} options={{ headerShown: null }} />
+            <Stack.Screen name={'Order List'} component={OrderList} options={{ headerShown: null }} />
+            <Stack.Screen name={'Add Order'} component={AddOrder} options={{ headerShown: null }} />
+            <Stack.Screen name={'Truck View'} component={TruckView} options={{ headerShown: null }} />
+            <Stack.Screen name={'Constraints'} component={ConstraintsView} options={{ headerShown: null }} />
     </Stack.Navigator>
   );
 };
