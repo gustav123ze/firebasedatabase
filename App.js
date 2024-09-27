@@ -12,6 +12,7 @@ import OrderList from './screens/OrderList';
 import AddOrder from './screens/AddOrder';
 import TruckView from './screens/TruckView';
 import ConstraintsView from './screens/ConstraintsView';
+import CargoConnectScreen from './screens/FirmorTruck';
 
 
 
@@ -52,10 +53,11 @@ const StackNavigation = () => {
 const BottomNavigation = () => {
   return (
     <Tab.Navigator>
-      <Tab.Screen name={'Home'} component={StackNavigation} options={{ tabBarIcon: () => (<Ionicons name="home" size={20} />) }} />
-      <Tab.Screen name={'Add'} component={AddOrder} options={{ tabBarIcon: () => (<Ionicons name="add" size={20} />) }} />
+      <Tab.Screen name={'Vælg type'} component={CargoConnectScreen} options={{ tabBarIcon: () => (<Ionicons name="home" size={20} />) }} />
+      <Tab.Screen name={'Afhentninger'} component={StackNavigation} options={{ tabBarIcon: () => (<Ionicons name="basket" size={20} />) }} />
+      <Tab.Screen name={'Tilføj'} component={AddOrder} options={{ tabBarIcon: () => (<Ionicons name="add" size={20} />) }} />
       <Tab.Screen name={'Truck'} component={TruckView} options={{ tabBarIcon: () => (<Ionicons name="car" size={20} />) }} />
-      <Tab.Screen name={'Constraints'} component={ConstraintsView} options={{ tabBarIcon: () => (<Ionicons name="settings" size={20} />) }} />
+      <Tab.Screen name={'Begrænsninger'} component={ConstraintsView} options={{ tabBarIcon: () => (<Ionicons name="settings" size={20} />) }} />
     </Tab.Navigator>
   );
 };
