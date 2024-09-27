@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Button, Linking } from 'react-native';
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, update } from "firebase/database";
 
 // Funktion til at konvertere dato fra "DD-MM-YYYY" til et Date-objekt
 const parseDate = (dateString) => {
@@ -10,6 +10,7 @@ const parseDate = (dateString) => {
 
 const TruckView = () => {
     const [routeDetails, setRouteDetails] = useState([]); // Ændret til at være en liste af ruter
+    const [occupiedRoutes, setOccupiedRoutes] = useState([]); // Tilstand til optagne ruter
     const [loading, setLoading] = useState(true);
     const [expandedRouteIndex, setExpandedRouteIndex] = useState(null); // Tilstand til at styre, hvilken rute der er foldet ud
 
@@ -92,6 +93,27 @@ const TruckView = () => {
         Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
     };
 
+    const takeRoute = (route) => {
+        const db = getDatabase();
+        const updates = {};
+
+        // Opdater databasen for at angive, at ruten er taget
+        route.orders.forEach(order => {
+            updates[`Orders/${order.id}/taken`] = true; // Antag at 'taken' er en boolean
+        });
+
+        update(ref(db), updates)
+            .then(() => {
+                Alert.alert("Rute taget", "Du har taget ruten.");
+                setOccupiedRoutes(prev => [...prev, route]); // Tilføj ruten til optagne ruter
+                setRouteDetails(prev => prev.filter(r => r.date !== route.date)); // Fjern ruten fra ledige
+            })
+            .catch((error) => {
+                console.error(error);
+                Alert.alert("Fejl", "Der opstod en fejl ved opdatering af ruten.");
+            });
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Ledige ruter</Text>
@@ -116,11 +138,21 @@ const TruckView = () => {
                                     <Text>{`Pris: ${item.price}`}</Text>
                                 </View>
                             ))}
+                            {/* Knappen til at tage ruten */}
+                            <Button title="Tag rute" onPress={() => takeRoute(route)} />
                             {/* Knappen til at åbne Google Maps */}
                             <Button title="Åben rute i Maps" onPress={() => openGoogleMaps(route.orders)} />
                         </View>
                     )}
                 </TouchableOpacity>
+            ))}
+
+            <Text style={styles.title}>Besatte ruter</Text>
+            {occupiedRoutes.map((route, index) => (
+                <View key={index} style={styles.routeContainer}>
+                    <Text style={styles.routeText}>{`Rute for ${route.date}: ${route.totalOrders} ordrer`}</Text>
+                    <Text style={styles.routeText}>{`Samlet indtjening: ${route.totalEarnings.toFixed(2)} DKK`}</Text>
+                </View>
             ))}
         </View>
     );
