@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Button, Linking } from 'react-native';
 import { getDatabase, ref, onValue } from "firebase/database";
 
+// Funktion til at konvertere dato fra "DD-MM-YYYY" til et Date-objekt
+const parseDate = (dateString) => {
+    const parts = dateString.split("-");
+    return new Date(parts[2], parts[1] - 1, parts[0]); // år, måned (0-baseret), dag
+};
+
 const TruckView = () => {
-    const [orders, setOrders] = useState([]);
+    const [routeDetails, setRouteDetails] = useState([]); // Ændret til at være en liste af ruter
     const [loading, setLoading] = useState(true);
-    const [routeDetails, setRouteDetails] = useState({ totalEarnings: 0, totalOrders: 0 });
-    const [isRouteVisible, setIsRouteVisible] = useState(false); // For at styre synlighed af ruten
+    const [expandedRouteIndex, setExpandedRouteIndex] = useState(null); // Tilstand til at styre, hvilken rute der er foldet ud
 
     useEffect(() => {
         const db = getDatabase();
@@ -16,12 +21,35 @@ const TruckView = () => {
             const data = snapshot.val();
             if (data) {
                 const orderList = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                setOrders(orderList);
 
-                // Beregn samlede indtjening og antal ordrer
-                const totalEarnings = orderList.reduce((acc, order) => acc + parseFloat(order.price || 0), 0);
-                const totalOrders = orderList.length;
-                setRouteDetails({ totalEarnings, totalOrders });
+                // Filtrere ordrer for at inkludere kun dem fra i dag eller frem
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1); // Sætter datoen til i går
+
+                const filteredOrders = orderList.filter(order => {
+                    const orderDate = parseDate(order.pickupDate);
+                    return orderDate >= yesterday; // Sammenlign med i går
+                });
+
+                // Gruppere ordrer efter dato
+                const routesMap = {};
+                filteredOrders.forEach(order => {
+                    const orderDate = order.pickupDate;
+                    if (!routesMap[orderDate]) {
+                        routesMap[orderDate] = { totalEarnings: 0, totalOrders: 0, orders: [] };
+                    }
+                    routesMap[orderDate].totalEarnings += parseFloat(order.price || 0);
+                    routesMap[orderDate].totalOrders += 1;
+                    routesMap[orderDate].orders.push(order);
+                });
+
+                // Konvertere til en liste for at bruge i render
+                const routesArray = Object.entries(routesMap).map(([date, details]) => ({
+                    date,
+                    ...details,
+                }));
+
+                setRouteDetails(routesArray);
             } else {
                 Alert.alert("Ingen data", "Der blev ikke fundet nogen ordrer.");
             }
@@ -40,11 +68,12 @@ const TruckView = () => {
         return <ActivityIndicator size="large" color="#0000ff" />;
     }
 
-    const toggleRouteVisibility = () => {
-        setIsRouteVisible(!isRouteVisible);
+    const toggleRouteVisibility = (index) => {
+        // Hvis den klikkede rute allerede er åben, lukkes den. Ellers åbnes den.
+        setExpandedRouteIndex(expandedRouteIndex === index ? null : index);
     };
 
-    const openGoogleMaps = () => {
+    const openGoogleMaps = (orders) => {
         if (orders.length === 0) {
             Alert.alert("Ingen ordrer", "Der er ingen ordrer at rute.");
             return;
@@ -67,30 +96,32 @@ const TruckView = () => {
         <View style={styles.container}>
             <Text style={styles.title}>Ledige ruter</Text>
 
-            {/* Vis ruten */}
-            <TouchableOpacity style={styles.routeContainer} onPress={toggleRouteVisibility}>
-                <Text style={styles.routeText}>{`Rute: ${routeDetails.totalOrders} ordrer`}</Text>
-                <Text style={styles.routeText}>{`Samlet indtjening: ${routeDetails.totalEarnings.toFixed(2)} DKK`}</Text>
-            </TouchableOpacity>
+            {/* Vis ruter */}
+            {routeDetails.map((route, index) => (
+                <TouchableOpacity key={index} style={styles.routeContainer} onPress={() => toggleRouteVisibility(index)}>
+                    <Text style={styles.routeText}>{`Rute for ${route.date}: ${route.totalOrders} ordrer`}</Text>
+                    <Text style={styles.routeText}>{`Samlet indtjening: ${route.totalEarnings.toFixed(2)} DKK`}</Text>
 
-            {/* Vis ordrene, hvis ruten er synlig */}
-            {isRouteVisible && (
-                <View>
-                    {orders.map((item) => (
-                        <View key={item.id} style={styles.orderContainer}>
-                            <Text>{`Genstand: ${item.item}`}</Text>
-                            <Text>{`Afhentningsadresse: ${item.deliveryAddress}`}</Text>
-                            <Text>{`Afhentningsdato: ${item.pickupDate}`}</Text>
-                            <Text>{`Leveringsdato: ${item.deliveryDate}`}</Text>
-                            <Text>{`Leveringsadresse: ${item.pickupAddress}`}</Text>
-                            <Text>{`Vægt: ${item.weight}`}</Text>
-                            <Text>{`Pris: ${item.price}`}</Text>
+                    {/* Vis ordrene, hvis den aktuelle rute er synlig */}
+                    {expandedRouteIndex === index && (
+                        <View>
+                            {route.orders.map((item) => (
+                                <View key={item.id} style={styles.orderContainer}>
+                                    <Text>{`Genstand: ${item.item}`}</Text>
+                                    <Text>{`Afhentningsadresse: ${item.pickupAddress}`}</Text>
+                                    <Text>{`Afhentningsdato: ${item.pickupDate}`}</Text>
+                                    <Text>{`Leveringsdato: ${item.deliveryDate}`}</Text>
+                                    <Text>{`Leveringsadresse: ${item.deliveryAddress}`}</Text>
+                                    <Text>{`Vægt: ${item.weight}`}</Text>
+                                    <Text>{`Pris: ${item.price}`}</Text>
+                                </View>
+                            ))}
+                            {/* Knappen til at åbne Google Maps */}
+                            <Button title="Åben rute i Maps" onPress={() => openGoogleMaps(route.orders)} />
                         </View>
-                    ))}
-                    {/* Knappen til at åbne Google Maps */}
-                    <Button title="Åben rute i Maps" onPress={openGoogleMaps} />
-                </View>
-            )}
+                    )}
+                </TouchableOpacity>
+            ))}
         </View>
     );
 };
@@ -124,7 +155,3 @@ const styles = StyleSheet.create({
 });
 
 export default TruckView;
-
-
-
- 

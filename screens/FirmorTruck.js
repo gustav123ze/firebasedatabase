@@ -18,6 +18,7 @@ const CargoConnectScreen = ({ setUserType }) => {
         <Image 
           source={require('../assets/logo1.png')} 
           style={styles.image}
+          resizeMode="contain" // eller "cover"
         />
         <View style={styles.textContainer}>
           <Text style={styles.title}>CargoConnect</Text>
@@ -52,9 +53,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: 100,
-    height: 100,
-    marginRight: 5,
+    width: 110,
+    height: 110,
+    marginRight: 1,
   },
   textContainer: {
     alignItems: 'center',
