@@ -27,12 +27,12 @@ const CargoConnectScreen = ({ setUserType }) => {
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleSelectDriver}>
-          <Ionicons name="car" size={50} color="#4682b4" />
+          <Ionicons name="car" size={50} color="#2F67B2" />
           <Text style={styles.buttonText}>Chauffør</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleSelectCompany}>
-          <Ionicons name="briefcase" size={50} color="#4682b4" />
+          <Ionicons name="briefcase" size={50} color="#2F67B2" />
           <Text style={styles.buttonText}>Virksomhed</Text>
         </TouchableOpacity>
       </View>
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#4682b4',
+    color: '#2F67B2',
   },
   text: {
     fontSize: 12,
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   buttonText: {
     marginTop: 5, // Plads mellem ikonet og teksten
     fontSize: 16,
-    color: '#4682b4',
+    color: '#2F67B2',
   },
 });
 
