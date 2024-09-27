@@ -27,7 +27,7 @@ const firebaseConfig = {
 };
 
 // Initialiser Firebase, hvis det ikke allerede er gjort
-if (getApps().length < 1) {
+if (getApps().length < 1) { 
   initializeApp(firebaseConfig);
   console.log("Firebase On!");
 }

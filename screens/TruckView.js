@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Button, Linking } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Button, Linking, ScrollView } from 'react-native';
 import { getDatabase, ref, onValue, update } from "firebase/database";
 
 // Funktion til at konvertere dato fra "DD-MM-YYYY" til et Date-objekt
@@ -9,7 +9,7 @@ const parseDate = (dateString) => {
 };
 
 const TruckView = () => {
-    const [routeDetails, setRouteDetails] = useState([]); // Ændret til at være en liste af ruter
+    const [routeDetails, setRouteDetails] = useState([]); // Tilstand til ledige ruter
     const [occupiedRoutes, setOccupiedRoutes] = useState([]); // Tilstand til optagne ruter
     const [loading, setLoading] = useState(true);
     const [expandedRouteIndex, setExpandedRouteIndex] = useState(null); // Tilstand til at styre, hvilken rute der er foldet ud
@@ -88,8 +88,9 @@ const TruckView = () => {
         const destinations = Array.from(destinationsSet).join('|'); // Brug '|' til at separere adresserne
 
         // Opret URL'en til Google Maps
-        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint)}&destination=${encodeURIComponent(destinations)}&waypoints=${encodeURIComponent(Array.from(destinationsSet).join('|'))}`;
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint)}&destination=${encodeURIComponent(destinations)}&waypoints=${encodeURIComponent(Array.from(destinationsSet).slice(1).join('|'))}`;
 
+        console.log(url); // Log URL'en for debugging
         Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
     };
 
@@ -115,7 +116,7 @@ const TruckView = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <Text style={styles.title}>Ledige ruter</Text>
 
             {/* Vis ruter */}
@@ -149,12 +150,31 @@ const TruckView = () => {
 
             <Text style={styles.title}>Besatte ruter</Text>
             {occupiedRoutes.map((route, index) => (
-                <View key={index} style={styles.routeContainer}>
+                <TouchableOpacity key={index} style={styles.routeContainer} onPress={() => toggleRouteVisibility(route.date)}>
                     <Text style={styles.routeText}>{`Rute for ${route.date}: ${route.totalOrders} ordrer`}</Text>
                     <Text style={styles.routeText}>{`Samlet indtjening: ${route.totalEarnings.toFixed(2)} DKK`}</Text>
-                </View>
+
+                    {/* Vis ordrene, hvis den aktuelle besatte rute er synlig */}
+                    {expandedRouteIndex === route.date && (
+                        <View>
+                            {route.orders.map((item) => (
+                                <View key={item.id} style={styles.orderContainer}>
+                                    <Text>{`Genstand: ${item.item}`}</Text>
+                                    <Text>{`Afhentningsadresse: ${item.pickupAddress}`}</Text>
+                                    <Text>{`Afhentningsdato: ${item.pickupDate}`}</Text>
+                                    <Text>{`Leveringsdato: ${item.deliveryDate}`}</Text>
+                                    <Text>{`Leveringsadresse: ${item.deliveryAddress}`}</Text>
+                                    <Text>{`Vægt: ${item.weight}`}</Text>
+                                    <Text>{`Pris: ${item.price}`}</Text>
+                                </View>
+                            ))}
+                            {/* Knappen til at åbne Google Maps for besatte ruter */}
+                            <Button title="Åben rute i Maps" onPress={() => openGoogleMaps(route.orders)} />
+                        </View>
+                    )}
+                </TouchableOpacity>
             ))}
-        </View>
+        </ScrollView>
     );
 };
 
@@ -175,14 +195,14 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     routeText: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '500',
     },
     orderContainer: {
         padding: 10,
-        marginVertical: 8,
-        backgroundColor: '#f9c2ff',
+        backgroundColor: '#f8d7da',
         borderRadius: 5,
+        marginBottom: 8,
     },
 });
 
