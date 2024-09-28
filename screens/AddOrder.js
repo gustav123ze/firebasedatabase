@@ -1,3 +1,5 @@
+//screens/AddOrder.js
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, ScrollView, SafeAreaView, StyleSheet } from 'react-native';
 import { getDatabase, ref, push } from 'firebase/database';
