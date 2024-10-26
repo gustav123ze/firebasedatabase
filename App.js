@@ -17,6 +17,7 @@ import CargoConnectScreen from './screens/FirmorTruck';
 import ScanOrder from './screens/ScanOrder';
 
 
+
 // Firebase konfiguration fra .env-filen
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -34,6 +35,7 @@ if (getApps().length < 1) {
   console.log("Firebase On!");
 }
 
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -44,7 +46,7 @@ const StackNavigation = () => {
       <Stack.Screen name={'Add Order'} component={AddOrder} options={{ headerShown: null }} />
       <Stack.Screen name={'Truck View'} component={TruckView} options={{ headerShown: null }} />
       <Stack.Screen name={'Constraints'} component={ConstraintsView} options={{ headerShown: null }} />
-      <Stack.Screen name={'Scan Order'} component={ScanOrder} options={{ headerShown: null }} />
+      <Stack.Screen name={'ScanOrder'} component={ScanOrder} options={{headerShown: false}} />
     </Stack.Navigator>
   );
 };
@@ -65,7 +67,7 @@ const BottomNavigation = ({ userType, setUserType }) => {
         <>
           <Tab.Screen name={'Afhentninger'} component={StackNavigation} options={{ tabBarIcon: () => (<Ionicons name="basket" size={20} />) }} />
           <Tab.Screen name={'Tilføj'} component={AddOrder} options={{ tabBarIcon: () => (<Ionicons name="add" size={20} />) }} />
-          <Tab.Screen name={'Scan'} component={ScanOrder} options={{ tabBarIcon: () => (<Ionicons name="qr-code" size={20} />) }} />
+          <Tab.Screen name={'ScanOrder'} component={ScanOrder} options={{ tabBarIcon: () => (<Ionicons name="camera" size={20} />) }} />
         </>
       )}
     </Tab.Navigator>

@@ -1,86 +1,125 @@
 // screens/ScanOrder.js
-import React, { useState, useEffect } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Camera } from 'expo-camera';
+import React, { useState, useRef } from 'react';
+import { Camera } from 'expo-camera/legacy';
+import { StatusBar } from 'expo-status-bar';
+import { Button, Text, TouchableOpacity, View, SafeAreaView, StyleSheet, ActivityIndicator } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import TextRecognition from 'react-native-text-recognition';
 
-const ScanOrder = () => {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [cameraRef, setCameraRef] = useState(null);
+export default function ScanOrder({ navigation }) {
+  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [loading, setLoading] = useState(false);
+  const [scannedText, setScannedText] = useState("");
+  const cameraRef = useRef(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
-
-  if (hasPermission === null) {
+  // Håndterer manglende tilladelser
+  if (!permission) {
     return <View />;
   }
-  if (hasPermission === false) {
-    return <Text>No access to camera</Text>;
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center' }}>Vi har brug for din tilladelse til at vise kameraet</Text>
+        <Button onPress={requestPermission} title="Giv tilladelse" />
+      </View>
+    );
   }
 
-  const takePicture = async () => {
-    if (cameraRef) {
-      const { uri } = await cameraRef.takePictureAsync();
-      console.log(uri); // Du kan håndtere billed-URI'en her, f.eks. gemme den eller uploade den.
+  // Skifter mellem front- og bagkamera
+  const toggleCameraType = () => {
+    setType(type === Camera.Constants.Type.back ? Camera.Constants.Type.front : Camera.Constants.Type.back);
+  };
+
+  // Håndterer tekstgenkendelse
+  const handleTextRecognition = async () => {
+    if (!cameraRef.current) {
+      console.log("Ingen kamerareference");
+      return;
     }
+    setLoading(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync();
+      const text = await TextRecognition.recognize(photo.uri);
+      setScannedText(text.join(" "));
+    } catch (error) {
+      console.error("Fejl ved genkendelse af tekst: ", error);
+      setScannedText("Fejl ved scanning af tekst.");
+    }
+    setLoading(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Camera 
-        style={styles.camera} 
-        type={type} 
-        ref={ref => setCameraRef(ref)} 
-      >
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              setType(
-                type === Camera.Constants.Type.back
-                  ? Camera.Constants.Type.front
-                  : Camera.Constants.Type.back
-              );
-            }}>
-            <Text style={styles.text}> Flip </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={takePicture}>
-            <Text style={styles.text}> Take Picture </Text>
-          </TouchableOpacity>
-        </View>
-      </Camera>
-    </View>
+    <SafeAreaView style={styles.safeview}>
+      <View style={styles.container}>
+        <Camera style={styles.camera} type={type} ref={cameraRef}>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.flipbtn} onPress={toggleCameraType}>
+              <Ionicons name="camera-reverse-outline" size={32} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.scanbtn} onPress={handleTextRecognition}>
+              <Text style={styles.text}>{loading ? "Scanning..." : "Scan Text"}</Text>
+            </TouchableOpacity>
+          </View>
+        </Camera>
+      </View>
+      {loading && <ActivityIndicator size="large" color="#fff" />}
+      {scannedText ? <Text style={styles.resultText}>{scannedText}</Text> : null}
+      <StatusBar style="light" />
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    width: '100%',
+    borderRadius: 20,
+    backgroundColor: 'black',
   },
   camera: {
     flex: 1,
+    width: '100%',
+    justifyContent: 'flex-end',
   },
   buttonContainer: {
-    flex: 1,
-    backgroundColor: 'transparent',
     flexDirection: 'row',
-    margin: 20,
-  },
-  button: {
-    flex: 0.1,
-    alignSelf: 'flex-end',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 10,
+    backgroundColor: 'transparent',
+    margin: 32,
+    alignSelf: 'center',
   },
   text: {
-    fontSize: 18,
-    color: 'black',
+    fontSize: 16,
+    fontWeight: 'semibold',
+    color: 'white',
+    alignSelf: 'center',
+  },
+  scanbtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    height: 50,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    marginHorizontal: 10,
+  },
+  flipbtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 100,
+    padding: 5,
+    alignSelf: 'baseline',
+  },
+  safeview: {
+    backgroundColor: 'black',
+    flex: 1,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  resultText: {
+    color: 'white',
+    fontSize: 16,
+    padding: 20,
+    textAlign: 'center',
   },
 });
-
-export default ScanOrder;
